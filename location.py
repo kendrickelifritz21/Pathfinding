@@ -2,31 +2,55 @@ from tkinter import *
 
 
 class Location(Frame):
-    def __init__(self, master):
+    def __init__(self, master, x, y):
         super(Location, self).__init__(master, relief=SOLID, borderwidth=1, height=25, width=25, bg="white")
-        self.type = 0
         self.wall = False
+        self.coordinates = (x, y)
+        self.neighbors = []
 
     def setWall(self):
         self.config(bg="green")
         self.wall = True
+        print(self.coordinates)
+        print("neighbors: ", self.neighbors, "\n")
 
     def removeWall(self):
         self.config(bg="white")
         self.wall = False
 
+    def addNeighbors(self, width, height):
+        x, y = self.coordinates
+
+        # add top neighbor if it exists
+        if y - 1 >= 0:
+            self.neighbors.append((x, y - 1))
+
+        # add bottom neighbor if exists
+        if y + 1 < height:
+            self.neighbors.append((x, y + 1))
+
+        # add left neighbor if exists
+        if x - 1 >= 0:
+            self.neighbors.append((x - 1, y))
+
+        # add right neighbor if exists
+        if x + 1 < width:
+            self.neighbors.append((x + 1, y))
 
 
-class LocationContainer(Frame):
+
+class LocationGrid(Frame):
     def __init__(self, master, width, height):
-        super(LocationContainer, self).__init__(master)
+        super(LocationGrid, self).__init__(master)
+        self.width = width
+        self.height = height
 
         locations = []
 
         for y in range(height):
             locations.append([])
             for x in range(width):
-                location = Location(self)
+                location = Location(self, x, y)
                 location.grid(row=y, column=x)
 
                 location.bind("<Button-1>", self.left_click)
@@ -39,6 +63,8 @@ class LocationContainer(Frame):
         self.locations = locations
         self.left_pressed = False
         self.right_pressed = False
+
+        self.buildGraph()
 
     def left_click(self, event):
         self.left_pressed = True
@@ -68,6 +94,11 @@ class LocationContainer(Frame):
         widget = self.winfo_containing(event.x_root, event.y_root)
         widget.removeWall()
 
+    def buildGraph(self):
+        for row in self.locations:
+            for location in row:
+                location.addNeighbors(self.width, self.height)
+
 
 class MyWindow(Tk):
     def __init__(self):
@@ -75,7 +106,7 @@ class MyWindow(Tk):
 
         self.minsize(1350, 750)
 
-        mazeGrid = LocationContainer(self, 50, 30)
+        mazeGrid = LocationGrid(self, 50, 30)
         mazeGrid.pack(side=LEFT)
 
         buttonFrameContainer = Frame(master=self, relief=FLAT)
