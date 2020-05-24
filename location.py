@@ -1,27 +1,35 @@
 from tkinter import *
+from enum import Enum
+
+
+class LocationType(Enum):
+    EMPTY = 1
+    WALL = 2
+    START = 3
+    END = 4
 
 
 class Location(Frame):
     def __init__(self, master, x, y):
         super(Location, self).__init__(master, relief=SOLID, borderwidth=1, height=25, width=25, bg="white")
-        self.wall = False
+        self.type = LocationType.EMPTY
         self.coordinates = (x, y)
         self.neighbors = []
 
-    def setWall(self):
+    def set_wall(self):
         self.config(bg="#383b39")
-        self.wall = True
+        self.type = LocationType.WALL
         #print(self.coordinates)
         #print("neighbors: ", self.neighbors, "\n")
 
-    def removeWall(self):
+    def reset_location(self):
         self.config(bg="white")
-        self.wall = False
+        self.type = LocationType.EMPTY
 
-    def isWall(self):
-        return self.wall
+    def is_wall(self):
+        return self.type is LocationType.WALL
 
-    def addNeighbors(self, width, height):
+    def add_neighbors(self, width, height):
         x, y = self.coordinates
 
         # add top neighbor if it exists
@@ -56,102 +64,96 @@ class LocationGrid(Frame):
                 location = Location(self, x, y)
                 location.grid(row=y, column=x)
 
-                location.bind("<Button-1>", self.left_click)
-                location.bind("<Button-3>", self.right_click)
-                location.bind("<B1-Motion>", self.left_moved)
-                location.bind("<B3-Motion>", self.right_moved)
+                location.bind("<Button-1>", self.left_click_event_handler)
+                location.bind("<Button-3>", self.right_click_event_handler)
+                location.bind("<B1-Motion>", self.left_moved_event_handler)
+                location.bind("<B3-Motion>", self.right_moved_event_handler)
 
                 locations[y].append(location)
 
         self.locations = locations
         self.startPoint = None
         self.endPoint = None
-        self.left_pressed = False
-        self.right_pressed = False
 
-        self.buildGraph()
+        self.build_graph()
 
-    def left_click(self, event):
-        self.left_pressed = True
-        self.set_wall(event)
+    def left_click_event_handler(self, event):
+        self.set_wall_event_handler(event)
 
-    def release_left(self, event):
-        self.left_pressed = False
+    def left_moved_event_handler(self, event):
+        self.set_wall_event_handler(event)
 
-    def left_moved(self, event):
-        self.set_wall(event)
+    def right_click_event_handler(self, event):
+        self.reset_location_event_handler(event)
 
-    def right_click(self, event):
-        self.right_pressed = True
-        self.remove_wall(event)
+    def right_moved_event_handler(self, event):
+        self.reset_location_event_handler(event)
 
-    def release_right(self, event):
-        self.right_pressed = False
-
-    def right_moved(self, event):
-        self.remove_wall(event)
-
-    def set_wall(self, event):
+    def set_wall_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
         try:
             coordinates = widget.coordinates
             if coordinates != self.startPoint and coordinates != self.endPoint:
-                widget.setWall()
+                widget.set_wall()
         except AttributeError:
             pass
 
-    def remove_wall(self, event):
+    def reset_location_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
         try:
             coordinates = widget.coordinates
             if coordinates != self.startPoint and coordinates != self.endPoint:
-                widget.removeWall()
+                widget.reset_location()
         except AttributeError:
             pass
 
-    def buildGraph(self):
+    def build_graph(self):
         for row in self.locations:
             for location in row:
-                location.addNeighbors(self.width, self.height)
+                location.add_neighbors(self.width, self.height)
 
-    def setStartPoint(self, event):
+    def set_start_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
         try:
             coordinates = widget.coordinates
             self.startPoint = coordinates
-            if widget.isWall():
-                widget.removeWall()
+            if widget.is_wall():
+                widget.reset_location()
             widget.config(bg="yellow")
+            widget.type = LocationType.START
         except AttributeError:
             pass
 
-    def getStartPoint(self):
+    def get_start_point(self):
         return self.startPoint
 
-    def setEndPoint(self, event):
+    def set_end_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
         try:
             coordinates = widget.coordinates
             self.endPoint = coordinates
-            if widget.isWall():
-                widget.removeWall()
+            if widget.is_wall():
+                widget.reset_location()
             widget.config(bg="green")
+            widget.type = LocationType.START
         except AttributeError:
             pass
 
-    def getEndPoint(self):
+    def get_end_point(self):
         return self.endPoint
 
-    def resetStartEnd(self):
+    def reset_start_end(self):
         if self.startPoint:
             x, y = self.startPoint
             startLocation = self.locations[y][x]
             startLocation.config(bg="white")
+            startLocation.type = LocationType.EMPTY
             self.startPoint = None
         if self.endPoint:
             x, y = self.endPoint
             endLocation = self.locations[y][x]
             endLocation.config(bg="white")
+            endLocation.type = LocationType.EMPTY
             self.endPoint = None
 
 
@@ -162,6 +164,7 @@ class MyWindow(Tk):
         super(MyWindow, self).__init__()
 
         self.minsize(1350, 750)
+        self.title("pathfinding")
 
         self.mazeGrid = LocationGrid(self, 50, 30)
         self.mazeGrid.pack(side=LEFT)
@@ -170,31 +173,31 @@ class MyWindow(Tk):
         self.buttonFrameContainer.pack(side=LEFT, fill=X, expand=True)
 
         self.button1 = Button(master=self.buttonFrameContainer, text="Start Point", bg="white")
-        self.button1.bind("<Button-1>", self.startPointClicked)
+        self.button1.bind("<Button-1>", self.start_point_button_clicked)
         self.button1.pack()
 
         self.button2 = Button(master=self.buttonFrameContainer, text="End Point", bg="white")
-        self.button2.bind("<Button-1>", self.endPointClicked)
+        self.button2.bind("<Button-1>", self.end_point_button_clicked)
         self.button2.pack()
 
         self.button3 = Button(master=self.buttonFrameContainer, text="Reset Start/End", bg="white")
-        self.button3.bind("<Button-1>", self.resetStartEndClicked)
+        self.button3.bind("<Button-1>", self.reset_start_end_clicked)
         self.button3.pack()
 
-    def startPointClicked(self, event):
-        if not self.mazeGrid.getStartPoint():
-            self.unbindWallSetting()
-            self.bindStartPointSetting()
+    def start_point_button_clicked(self, event):
+        if not self.mazeGrid.get_start_point():
+            self.unbind_wall_setting()
+            self.bind_start_point_setting()
 
-    def endPointClicked(self, event):
-        if not self.mazeGrid.getEndPoint():
-            self.unbindWallSetting()
-            self.bindEndPointSetting()
+    def end_point_button_clicked(self, event):
+        if not self.mazeGrid.get_end_point():
+            self.unbind_wall_setting()
+            self.bind_end_point_setting()
 
-    def resetStartEndClicked(self, event):
-        self.mazeGrid.resetStartEnd()
+    def reset_start_end_clicked(self, event):
+        self.mazeGrid.reset_start_end()
 
-    def unbindWallSetting(self):
+    def unbind_wall_setting(self):
         for row in self.mazeGrid.locations:
             for location in row:
                 location.unbind("<Button-1>")
@@ -202,30 +205,30 @@ class MyWindow(Tk):
                 location.unbind("<B1-Motion>")
                 location.unbind("<B3-Motion>")
 
-    def bindWallSetting(self):
+    def bind_wall_setting(self):
         for row in self.mazeGrid.locations:
             for location in row:
-                location.bind("<Button-1>", self.mazeGrid.left_click)
-                location.bind("<Button-3>", self.mazeGrid.right_click)
-                location.bind("<B1-Motion>", self.mazeGrid.left_moved)
-                location.bind("<B3-Motion>", self.mazeGrid.right_moved)
+                location.bind("<Button-1>", self.mazeGrid.left_click_event_handler)
+                location.bind("<Button-3>", self.mazeGrid.right_click_event_handler)
+                location.bind("<B1-Motion>", self.mazeGrid.left_moved_event_handler)
+                location.bind("<B3-Motion>", self.mazeGrid.right_moved_event_handler)
 
-    def bindStartPointSetting(self):
+    def bind_start_point_setting(self):
         for row in self.mazeGrid.locations:
             for location in row:
-                location.bind("<Button-1>", self.setStartPoint)
+                location.bind("<Button-1>", self.start_location_clicked)
 
-    def setStartPoint(self, event):
-        self.mazeGrid.setStartPoint(event)
-        self.bindWallSetting()
-        print(self.mazeGrid.getStartPoint())
+    def start_location_clicked(self, event):
+        self.mazeGrid.set_start_event_handler(event)
+        self.bind_wall_setting()
+        print(self.mazeGrid.get_start_point())
 
-    def bindEndPointSetting(self):
+    def bind_end_point_setting(self):
         for row in self.mazeGrid.locations:
             for location in row:
-                location.bind("<Button-1>", self.setEndPoint)
+                location.bind("<Button-1>", self.end_location_clicked)
 
-    def setEndPoint(self, event):
-        self.mazeGrid.setEndPoint(event)
-        self.bindWallSetting()
-        print(self.mazeGrid.getEndPoint())
+    def end_location_clicked(self, event):
+        self.mazeGrid.set_end_event_handler(event)
+        self.bind_wall_setting()
+        print(self.mazeGrid.get_end_point())
