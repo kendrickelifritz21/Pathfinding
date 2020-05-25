@@ -172,11 +172,37 @@ class LocationGrid(Frame):
         return self.locations[y][x]
 
 
+class ButtonContainer(Frame):
+    def __init__(self, master):
+        super(ButtonContainer, self).__init__(master, relief=FLAT)
+
+        self.button_manager = None
+
+        self.button1 = Button(master=self, text="Start Point", bg="white")
+        self.button1.bind("<Button-1>", self.start_point_button_clicked)
+        self.button1.pack()
+
+        self.button2 = Button(master=self, text="End Point", bg="white")
+        self.button2.bind("<Button-1>", self.end_point_button_clicked)
+        self.button2.pack()
+
+        self.button3 = Button(master=self, text="Reset Start/End", bg="white")
+        self.button3.bind("<Button-1>", self.reset_start_end_clicked)
+        self.button3.pack()
+
+    def start_point_button_clicked(self, event):
+        self.button_manager.start_point_button_clicked()
+
+    def end_point_button_clicked(self, event):
+        self.button_manager.end_point_button_clicked()
+
+    def reset_start_end_clicked(self, event):
+        self.button_manager.reset_start_end_clicked()
 
 
-class MyWindow(Tk):
+class Window(Tk):
     def __init__(self):
-        super(MyWindow, self).__init__()
+        super(Window, self).__init__()
 
         self.minsize(1350, 750)
         self.title("pathfinding")
@@ -184,33 +210,8 @@ class MyWindow(Tk):
         self.grid = LocationGrid(self, 50, 30)
         self.grid.pack(side=LEFT)
 
-        self.button_container = Frame(master=self, relief=FLAT)
+        self.button_container = ButtonContainer(self)
         self.button_container.pack(side=LEFT, fill=X, expand=True)
-
-        self.button1 = Button(master=self.button_container, text="Start Point", bg="white")
-        self.button1.bind("<Button-1>", self.start_point_button_clicked)
-        self.button1.pack()
-
-        self.button2 = Button(master=self.button_container, text="End Point", bg="white")
-        self.button2.bind("<Button-1>", self.end_point_button_clicked)
-        self.button2.pack()
-
-        self.button3 = Button(master=self.button_container, text="Reset Start/End", bg="white")
-        self.button3.bind("<Button-1>", self.reset_start_end_clicked)
-        self.button3.pack()
-
-    def start_point_button_clicked(self, event):
-        if not self.grid.get_start_point_as_pair():
-            self.unbind_wall_setting()
-            self.bind_start_point_setting()
-
-    def end_point_button_clicked(self, event):
-        if not self.grid.get_end_point_as_pair():
-            self.unbind_wall_setting()
-            self.bind_end_point_setting()
-
-    def reset_start_end_clicked(self, event):
-        self.grid.reset_start_end()
 
     def unbind_wall_setting(self):
         for row in self.grid.locations:
@@ -247,3 +248,22 @@ class MyWindow(Tk):
         self.grid.set_end_event_handler(event)
         self.bind_wall_setting()
         print(self.grid.get_end_point_as_pair())
+
+
+class ButtonManager:
+    def __init__(self, window):
+        self.window = window
+        self.window.button_container.button_manager = self
+
+    def start_point_button_clicked(self):
+        if not self.window.grid.get_start_point_as_pair():
+            self.window.unbind_wall_setting()
+            self.window.bind_start_point_setting()
+
+    def end_point_button_clicked(self):
+        if not self.window.grid.get_end_point_as_pair():
+            self.window.unbind_wall_setting()
+            self.window.bind_end_point_setting()
+
+    def reset_start_end_clicked(self):
+        self.window.grid.reset_start_end()

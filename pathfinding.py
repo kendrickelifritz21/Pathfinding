@@ -2,6 +2,7 @@ from tkinter import *
 from location import *
 
 
-appWindow = MyWindow()
+appWindow = Window()
+ButtonManager(appWindow)
 appWindow.mainloop()
 

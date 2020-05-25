@@ -9,6 +9,7 @@ def initialize_closed_list(width, height):
             closed_list[y].append(False)
     return closed_list
 
+
 def initialize_g_values(width, height):
     g_values = []
     for y in range(height):
