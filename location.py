@@ -1,5 +1,6 @@
 from tkinter import *
 from enum import Enum
+from searching import *
 
 
 class LocationType(Enum):
@@ -12,22 +13,20 @@ class LocationType(Enum):
 class Location(Frame):
     def __init__(self, master, x, y):
         super(Location, self).__init__(master, relief=SOLID, borderwidth=1, height=25, width=25, bg="white")
-        self.type = LocationType.EMPTY
+        self.type = "empty"
         self.coordinates = (x, y)
         self.neighbors = []
 
     def set_wall(self):
         self.config(bg="#383b39")
-        self.type = LocationType.WALL
-        #print(self.coordinates)
-        #print("neighbors: ", self.neighbors, "\n")
+        self.type = "wall"
 
     def reset_location(self):
         self.config(bg="white")
-        self.type = LocationType.EMPTY
+        self.type = "empty"
 
     def is_wall(self):
-        return self.type is LocationType.WALL
+        return self.type == "wall"
 
     def add_neighbors(self, width, height):
         x, y = self.coordinates
@@ -101,8 +100,7 @@ class LocationGrid(Frame):
     def reset_location_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
         try:
-            coordinates = widget.coordinates
-            if coordinates != self.start_point and coordinates != self.end_point:
+            if widget.is_wall():
                 widget.reset_location()
         except AttributeError:
             pass
@@ -120,7 +118,7 @@ class LocationGrid(Frame):
             if widget.is_wall():
                 widget.reset_location()
             widget.config(bg="yellow")
-            widget.type = LocationType.START
+            widget.type = "start"
         except AttributeError:
             pass
 
@@ -128,10 +126,13 @@ class LocationGrid(Frame):
         return self.start_point
 
     def get_start_point_as_object(self):
-        start_x = self.start_point[0]
-        start_y = self.start_point[1]
+        if self.start_point:
+            start_x = self.start_point[0]
+            start_y = self.start_point[1]
 
-        return self.locations[start_y][start_x]
+            return self.locations[start_y][start_x]
+        else:
+            return None
 
     def set_end_event_handler(self, event):
         widget = self.winfo_containing(event.x_root, event.y_root)
@@ -141,7 +142,7 @@ class LocationGrid(Frame):
             if widget.is_wall():
                 widget.reset_location()
             widget.config(bg="green")
-            widget.type = LocationType.START
+            widget.type = "end"
         except AttributeError:
             pass
 
@@ -149,24 +150,21 @@ class LocationGrid(Frame):
         return self.end_point
 
     def get_end_point_as_object(self):
-        end_x = self.end_point[0]
-        end_y = self.end_point[1]
-
-        return self.locations[end_y][end_x]
-
-    def reset_start_end(self):
-        if self.start_point:
-            x, y = self.start_point
-            start_location = self.locations[y][x]
-            start_location.config(bg="white")
-            start_location.type = LocationType.EMPTY
-            self.start_point = None
         if self.end_point:
-            x, y = self.end_point
-            end_location = self.locations[y][x]
-            end_location.config(bg="white")
-            end_location.type = LocationType.EMPTY
-            self.end_point = None
+            end_x = self.end_point[0]
+            end_y = self.end_point[1]
+
+            return self.locations[end_y][end_x]
+        else:
+            return None
+
+    def reset(self):
+        for row in self.locations:
+            for location in row:
+                if not location.is_wall():
+                    location.reset_location()
+        self.start_point = None
+        self.end_point = None
 
     def get_point_as_object(self, x, y):
         return self.locations[y][x]
@@ -186,9 +184,14 @@ class ButtonContainer(Frame):
         self.button2.bind("<Button-1>", self.end_point_button_clicked)
         self.button2.pack()
 
-        self.button3 = Button(master=self, text="Reset Start/End", bg="white")
-        self.button3.bind("<Button-1>", self.reset_start_end_clicked)
+        self.button3 = Button(master=self, text="Reset", bg="white")
+        self.button3.bind("<Button-1>", self.reset_clicked)
         self.button3.pack()
+
+        self.button4 = Button(master=self, text="A* Search", bg="white")
+        self.button4.bind("<Button-1>", self.A_star_button_clicked)
+        self.button4.pack()
+
 
     def start_point_button_clicked(self, event):
         self.button_manager.start_point_button_clicked()
@@ -196,8 +199,11 @@ class ButtonContainer(Frame):
     def end_point_button_clicked(self, event):
         self.button_manager.end_point_button_clicked()
 
-    def reset_start_end_clicked(self, event):
-        self.button_manager.reset_start_end_clicked()
+    def reset_clicked(self, event):
+        self.button_manager.reset_clicked()
+
+    def A_star_button_clicked(self, event):
+        self.button_manager.A_star_button_clicked()
 
 
 class Window(Tk):
@@ -237,7 +243,6 @@ class Window(Tk):
     def start_location_clicked(self, event):
         self.grid.set_start_event_handler(event)
         self.bind_wall_setting()
-        print(self.grid.get_start_point_as_pair())
 
     def bind_end_point_setting(self):
         for row in self.grid.locations:
@@ -247,7 +252,6 @@ class Window(Tk):
     def end_location_clicked(self, event):
         self.grid.set_end_event_handler(event)
         self.bind_wall_setting()
-        print(self.grid.get_end_point_as_pair())
 
 
 class ButtonManager:
@@ -265,5 +269,10 @@ class ButtonManager:
             self.window.unbind_wall_setting()
             self.window.bind_end_point_setting()
 
-    def reset_start_end_clicked(self):
-        self.window.grid.reset_start_end()
+    def reset_clicked(self):
+        self.window.grid.reset()
+
+    def A_star_button_clicked(self):
+        if self.window.grid.get_start_point_as_pair() and self.window.grid.get_end_point_as_pair():
+            A_star_searcher = AStarSearch(self.window.grid, self.window)
+            A_star_searcher.search()
