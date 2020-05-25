@@ -11,15 +11,6 @@ def initialize_closed_list(width, height):
     return closed_list
 
 
-def initialize_g_values(width, height):
-    g_values = []
-    for y in range(height):
-        g_values.append([])
-        for x in range(width):
-            g_values[y].append(float('inf'))
-    return g_values
-
-
 class SearchNode:
     def __init__(self, location, parent):
         self.location = location
@@ -50,7 +41,7 @@ class AStarSearch:
 
         while current_node.parent:
             if current_node.location.type == "empty":
-                current_node.location.config(bg="purple")
+                current_node.location.config(bg="#8367C7")
             current_node = current_node.parent
 
     def find_lowest_f_value_node_index(self):
@@ -93,7 +84,7 @@ class AStarSearch:
                         self.open_list[coordinates] = successor_node
         # push parent node onto closed list
         if node.location.type == "empty":
-            node.location.config(bg="red")
+            node.location.config(bg="#F7B801")
             self.window.update()
         x, y = node.location.coordinates
         self.closed_list[y][x] = True

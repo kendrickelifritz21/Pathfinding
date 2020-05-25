@@ -1,13 +1,5 @@
 from tkinter import *
-from enum import Enum
 from searching import *
-
-
-class LocationType(Enum):
-    EMPTY = 1
-    WALL = 2
-    START = 3
-    END = 4
 
 
 class Location(Frame):
@@ -18,7 +10,7 @@ class Location(Frame):
         self.neighbors = []
 
     def set_wall(self):
-        self.config(bg="#383b39")
+        self.config(bg="#757372")
         self.type = "wall"
 
     def reset_location(self):
@@ -117,7 +109,7 @@ class LocationGrid(Frame):
             self.start_point = coordinates
             if widget.is_wall():
                 widget.reset_location()
-            widget.config(bg="yellow")
+            widget.config(bg="#4361EE")
             widget.type = "start"
         except AttributeError:
             pass
@@ -141,7 +133,7 @@ class LocationGrid(Frame):
             self.end_point = coordinates
             if widget.is_wall():
                 widget.reset_location()
-            widget.config(bg="green")
+            widget.config(bg="#4CC9F0")
             widget.type = "end"
         except AttributeError:
             pass
@@ -166,6 +158,12 @@ class LocationGrid(Frame):
         self.start_point = None
         self.end_point = None
 
+    def reset_walls(self):
+        for row in self.locations:
+            for location in row:
+                if location.is_wall():
+                    location.reset_location()
+
     def get_point_as_object(self, x, y):
         return self.locations[y][x]
 
@@ -176,33 +174,56 @@ class ButtonContainer(Frame):
 
         self.button_manager = None
 
-        self.button1 = Button(master=self, text="Start Point", bg="white")
-        self.button1.bind("<Button-1>", self.start_point_button_clicked)
-        self.button1.pack()
 
-        self.button2 = Button(master=self, text="End Point", bg="white")
-        self.button2.bind("<Button-1>", self.end_point_button_clicked)
-        self.button2.pack()
+        self.start_point_button = Button(master=self,
+                                         text="Start Point",
+                                         bg="white",
+                                         relief="raised",
+                                         command=self.start_point_button_clicked)
+        self.start_point_button.pack()
 
-        self.button3 = Button(master=self, text="Reset", bg="white")
-        self.button3.bind("<Button-1>", self.reset_clicked)
-        self.button3.pack()
+        self.end_point_button = Button(master=self,
+                                       text="End Point",
+                                       bg="white",
+                                       relief="raised",
+                                       command=self.end_point_button_clicked)
+        self.end_point_button.pack()
 
-        self.button4 = Button(master=self, text="A* Search", bg="white")
-        self.button4.bind("<Button-1>", self.A_star_button_clicked)
-        self.button4.pack()
+        self.reset_button = Button(master=self,
+                                   text="Reset",
+                                   bg="white",
+                                   relief="raised",
+                                   command=self.reset_clicked)
+        self.reset_button.pack()
+
+        self.reset_walls_button = Button(master=self,
+                                         text="Reset Walls",
+                                         bg="white",
+                                         relief="raised",
+                                         command=self.reset_walls_clicked)
+        self.reset_walls_button.pack()
+
+        self.A_star_button = Button(master=self,
+                                    text="A* Search",
+                                    bg="white",
+                                    relief="raised",
+                                    command=self.A_star_button_clicked)
+        self.A_star_button.pack()
 
 
-    def start_point_button_clicked(self, event):
+    def start_point_button_clicked(self):
         self.button_manager.start_point_button_clicked()
 
-    def end_point_button_clicked(self, event):
+    def end_point_button_clicked(self):
         self.button_manager.end_point_button_clicked()
 
-    def reset_clicked(self, event):
+    def reset_clicked(self):
         self.button_manager.reset_clicked()
 
-    def A_star_button_clicked(self, event):
+    def reset_walls_clicked(self):
+        self.button_manager.reset_walls_clicked()
+
+    def A_star_button_clicked(self):
         self.button_manager.A_star_button_clicked()
 
 
@@ -271,6 +292,9 @@ class ButtonManager:
 
     def reset_clicked(self):
         self.window.grid.reset()
+
+    def reset_walls_clicked(self):
+        self.window.grid.reset_walls()
 
     def A_star_button_clicked(self):
         if self.window.grid.get_start_point_as_pair() and self.window.grid.get_end_point_as_pair():
