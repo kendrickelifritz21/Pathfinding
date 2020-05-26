@@ -178,6 +178,7 @@ class ButtonContainer(Frame):
         self.start_point_button = Button(master=self,
                                          text="Start Point",
                                          bg="white",
+                                         fg="black",
                                          relief="raised",
                                          command=self.start_point_button_clicked)
         self.start_point_button.pack()
@@ -185,6 +186,7 @@ class ButtonContainer(Frame):
         self.end_point_button = Button(master=self,
                                        text="End Point",
                                        bg="white",
+                                       fg="black",
                                        relief="raised",
                                        command=self.end_point_button_clicked)
         self.end_point_button.pack()
@@ -192,6 +194,7 @@ class ButtonContainer(Frame):
         self.reset_button = Button(master=self,
                                    text="Reset",
                                    bg="white",
+                                   fg="black",
                                    relief="raised",
                                    command=self.reset_clicked)
         self.reset_button.pack()
@@ -199,6 +202,7 @@ class ButtonContainer(Frame):
         self.reset_walls_button = Button(master=self,
                                          text="Reset Walls",
                                          bg="white",
+                                         fg="black",
                                          relief="raised",
                                          command=self.reset_walls_clicked)
         self.reset_walls_button.pack()
@@ -206,6 +210,7 @@ class ButtonContainer(Frame):
         self.A_star_button = Button(master=self,
                                     text="A* Search",
                                     bg="white",
+                                    fg="black",
                                     relief="raised",
                                     command=self.A_star_button_clicked)
         self.A_star_button.pack()
